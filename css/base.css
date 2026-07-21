@@ -229,6 +229,9 @@ h2 { font-size: 15px; margin-bottom: 8px; }
   padding: 6vh 12px 12px;
   overflow-y: auto;
 }
+#modal-root[hidden] {
+  display: none;
+}
 .modal {
   background: var(--surface);
   border: 1px solid var(--border);
