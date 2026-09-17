@@ -4,6 +4,13 @@ A personal, single-user web app for planning and tracking a self-study CS semest
 
 - **Semester grid** — weeks × courses, each with *Lecture* and *Exercises* tracked through
   Not started → Started → Partially → Fully, plus topic, notes and resource links per cell.
+  Click to select, drag or Shift-click to select a range, and paste a whole list or tab-separated
+  spreadsheet block into topics. Double-click or press Enter to edit a cell. Drag the edges of
+  Lecture/Exercises headers to resize columns; widths are remembered and included in backups.
+  Topics show on one line and reveal more as you widen columns. Delete/Backspace clears selected
+  topics; Ctrl/Cmd+Z undoes grid edits and resizing. Ctrl/Cmd+Shift+Z or Ctrl+Y redoes them.
+  Use the grid's Zoom dropdown (50%–150%) to see more of the semester or enlarge the table;
+  zoom is remembered without changing your saved column widths.
 - **Tasks** — assignment/deadline tracker with **two-way Microsoft To Do sync**
   (check things off from the To Do Android widget; the planner picks it up on next sync).
   Sub-items sync as real To Do checklist steps.

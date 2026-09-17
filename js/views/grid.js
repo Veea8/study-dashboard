@@ -2,6 +2,8 @@
 
 import { store } from "../store.js";
 import { esc, openModal, closeModal } from "../ui.js";
+import { bindGridControls } from "../grid-controls.js";
+import { commitGridChange } from "../grid-history.js";
 import {
   STATUSES,
   STATUS_LABELS,
@@ -15,12 +17,21 @@ import {
 } from "../models.js";
 
 let savedScroll = null;
+let savedSelection = null;
 
 export function render(container) {
   const settings = store.getSettings();
   const courses = sortedCourses(store.getCourses());
   const grid = store.getGrid();
   const curWeek = currentWeekIndex(settings);
+  const layout = store.getGridLayout() || {};
+  const zoomLevels = [0.5, 0.75, 1, 1.25, 1.5];
+  const zoom = zoomLevels.includes(layout.zoom) ? layout.zoom : 1;
+  const columns = courses.flatMap((c) =>
+    TRACKS.map((track) => ({ key: `${c.id}:${track}`, courseId: c.id, track })));
+  const widths = columns.map((col) => Math.max(80,
+    Number.isFinite(layout[col.key]) ? layout[col.key] : 160));
+  const resizeHandle = (key) => `<span class="column-resizer" data-resize="${esc(key)}" title="Drag to resize column"></span>`;
 
   const swatch = (status, w, courseId, track, clickable = true) =>
     `<button class="swatch ${status}" ${clickable ? "" : 'tabindex="-1"'}
@@ -31,30 +42,14 @@ export function render(container) {
   let head2 = `<th class="week-col"></th>`;
   for (const c of courses) {
     const dot = `<span style="color:${esc(c.color)}">●</span>`;
-    if (c.collapsed) {
-      head1 += `<th class="course-head" title="${esc(c.name)}">
-        ${dot} <span class="mono">${esc(c.shortName)}</span>
-        <button class="collapse-btn" data-course="${c.id}" title="Expand">[+]</button></th>`;
-      head2 += `<th class="track-head">L·E</th>`;
-    } else {
-      head1 += `<th class="course-head" colspan="2">
-        ${dot} ${esc(c.name)}
-        <button class="collapse-btn" data-course="${c.id}" title="Collapse">[–]</button></th>`;
-      head2 += `<th class="track-head">${TRACK_LABELS.lecture}</th><th class="track-head">${TRACK_LABELS.exercises}</th>`;
-    }
+    head1 += `<th class="course-head" colspan="2" title="${esc(c.name)}">${dot} ${esc(c.name)}</th>`;
+    head2 += TRACKS.map((t) => `<th class="track-head">${TRACK_LABELS[t]}${resizeHandle(`${c.id}:${t}`)}</th>`).join("");
   }
 
   let body = "";
   for (let w = 0; w < settings.numWeeks; w++) {
     let row = `<td class="week-col"><span class="wk-num">W${w + 1}</span>${esc(weekLabel(settings, w))}</td>`;
     for (const c of courses) {
-      if (c.collapsed) {
-        const mini = TRACKS.map((t) => {
-          const cell = getCell(grid, w, c.id, t);
-          return `<span class="swatch ${cell.status}" title="${TRACK_LABELS[t]}: ${STATUS_LABELS[cell.status]}"></span>`;
-        }).join("");
-        row += `<td class="cell-collapsed" data-course="${c.id}" title="${esc(c.name)} — click to expand"><span class="mini">${mini}</span></td>`;
-      } else {
         for (const t of TRACKS) {
           const cell = getCell(grid, w, c.id, t);
           const behind = w < curWeek && cell.status !== "full";
@@ -64,11 +59,10 @@ export function render(container) {
           row += `<td class="cell ${behind ? "behind" : ""}" data-w="${w}" data-course="${c.id}" data-track="${t}">
             <div class="cell-inner">
               ${swatch(cell.status, w, c.id, t)}
-              <span class="topic">${esc(cell.topic)}</span>
+              <span class="topic" title="${esc(cell.topic)}">${esc(cell.topic)}</span>
               ${meta ? `<span class="cell-meta">${meta}</span>` : ""}
             </div></td>`;
         }
-      }
     }
     body += `<tr class="${w === curWeek ? "current-week" : ""}">${row}</tr>`;
   }
@@ -78,22 +72,33 @@ export function render(container) {
   ).join("");
 
   container.innerHTML = `
+    <section class="grid-page">
     <div class="page-head">
       <h1>Semester grid</h1>
       <span class="sub mono">${esc(weekLabel(settings, 0))} → ${esc(weekLabel(settings, settings.numWeeks - 1))}
         · ${settings.numWeeks} weeks${curWeek >= 0 && curWeek < settings.numWeeks ? ` · now: W${curWeek + 1}` : ""}</span>
+      <label class="grid-zoom">Zoom <select aria-label="Grid zoom">${zoomLevels.map((level) => `<option value="${level}" ${level === zoom ? "selected" : ""}>${level * 100}%</option>`).join("")}</select></label>
     </div>
     <div class="grid-wrap">
-      <table class="semgrid">
+      <table class="semgrid" tabindex="0" aria-label="Semester grid. Select cells to paste topics; Enter to edit." style="width:${104 + widths.reduce((a, b) => a + b, 0)}px">
+        <colgroup><col style="width:104px">${columns.map((col, i) => `<col data-column="${esc(col.key)}" style="width:${widths[i]}px">`).join("")}</colgroup>
         <thead><tr>${head1}</tr><tr>${head2}</tr></thead>
         <tbody>${body}</tbody>
       </table>
     </div>
+    <p class="grid-help">Drag or Shift-click to select · paste topics · Delete to clear · Ctrl/Cmd+Z to undo · double-click or Enter to edit · hold and drag header edges to resize</p>
     <div class="grid-legend">${legend}
       <span title="Cell in a past week that is not Fully done"><span class="swatch" style="box-shadow: inset 3px 0 0 var(--danger); background: var(--surface-2)"></span>behind</span>
-    </div>`;
+    </div>
+    </section>`;
 
   const wrap = container.querySelector(".grid-wrap");
+  const table = container.querySelector(".semgrid");
+  const controls = bindGridControls(table, {
+    columns, widths, numWeeks: settings.numWeeks, layout, selection: savedSelection,
+    rerender: () => rerender(), edit: (td) => openCellEditor(+td.dataset.w, td.dataset.course, td.dataset.track, rerender),
+  });
+  controls.setZoom(zoom);
   if (savedScroll) {
     wrap.scrollTop = savedScroll.top;
     wrap.scrollLeft = savedScroll.left;
@@ -105,49 +110,35 @@ export function render(container) {
 
   const rerender = () => {
     savedScroll = { top: wrap.scrollTop, left: wrap.scrollLeft };
+    savedSelection = controls.getSelection();
     render(container);
+    container.querySelector(".semgrid").focus({ preventScroll: true });
   };
 
+  container.querySelector(".grid-zoom select").addEventListener("change", (e) => {
+    const value = Number(e.target.value);
+    controls.setZoom(value);
+    store.saveGridLayout({ ...store.getGridLayout(), zoom: value });
+  });
+  savedSelection = null;
+
   container.querySelector(".semgrid").addEventListener("click", (e) => {
-    const collapseBtn = e.target.closest(".collapse-btn");
-    if (collapseBtn) {
-      toggleCollapse(collapseBtn.dataset.course);
-      rerender();
-      return;
-    }
     const sw = e.target.closest("button.swatch");
     if (sw) {
       cycleStatus(+sw.dataset.w, sw.dataset.course, sw.dataset.track);
       rerender();
       return;
     }
-    const collapsed = e.target.closest("td.cell-collapsed");
-    if (collapsed) {
-      toggleCollapse(collapsed.dataset.course);
-      rerender();
-      return;
-    }
-    const td = e.target.closest("td.cell");
-    if (td) {
-      openCellEditor(+td.dataset.w, td.dataset.course, td.dataset.track, rerender);
-    }
   });
 }
 
-function toggleCollapse(courseId) {
-  const courses = store.getCourses();
-  const c = courses.find((x) => x.id === courseId);
-  if (!c) return;
-  c.collapsed = !c.collapsed;
-  store.saveCourses(courses);
-}
-
 function cycleStatus(w, courseId, track) {
-  const grid = store.getGrid();
-  const cell = getCell(grid, w, courseId, track);
+  const before = store.getGrid();
+  const grid = { ...before };
+  const cell = { ...getCell(grid, w, courseId, track) };
   cell.status = STATUSES[(STATUSES.indexOf(cell.status) + 1) % STATUSES.length];
   grid[cellKey(w, courseId, track)] = cell;
-  store.saveGrid(grid);
+  commitGridChange("cells", before, grid);
 }
 
 function openCellEditor(w, courseId, track, onSaved) {
@@ -217,13 +208,14 @@ function openCellEditor(w, courseId, track, onSaved) {
       note: modal.querySelector("#cell-note").value,
       links,
     };
-    const g = store.getGrid();
+    const before = store.getGrid();
+    const g = { ...before };
     if (!updated.topic && !updated.note && !links.length && updated.status === "none") {
       delete g[cellKey(w, courseId, track)];
     } else {
       g[cellKey(w, courseId, track)] = updated;
     }
-    store.saveGrid(g);
+    commitGridChange("cells", before, g);
     closeModal();
     onSaved();
   };

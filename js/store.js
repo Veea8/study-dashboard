@@ -6,6 +6,7 @@ const K = {
   settings: "sp.settings",
   courses: "sp.courses",
   grid: "sp.grid",
+  gridLayout: "sp.gridLayout",
   tasks: "sp.tasks",
   blocks: "sp.blocks",
   tombstones: "sp.tombstones",
@@ -33,6 +34,9 @@ export const store = {
 
   getGrid: () => read(K.grid, {}),
   saveGrid: (g) => write(K.grid, g),
+
+  getGridLayout: () => read(K.gridLayout, {}),
+  saveGridLayout: (layout) => write(K.gridLayout, layout),
 
   getTasks: () => read(K.tasks, []),
   saveTasks: (t) => write(K.tasks, t),

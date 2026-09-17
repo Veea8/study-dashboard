@@ -1,16 +1,30 @@
 /* ================= semester grid ================= */
+main#view:has(.grid-page) { padding-bottom: 16px; }
+.grid-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 80px);
+  height: calc(100dvh - 80px);
+  min-height: 240px;
+}
+.grid-page > .page-head, .grid-page > .grid-help, .grid-page > .grid-legend { flex-shrink: 0; }
+@media (max-width: 640px) {
+  .grid-page { height: calc(100vh - 74px); height: calc(100dvh - 74px); }
+}
 .grid-wrap {
+  flex: 1 1 auto;
+  min-height: 100px;
   overflow: auto;
-  max-height: calc(100vh - 150px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
 }
 table.semgrid {
+  --grid-scale: 1;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 12.5px;
-  min-width: 100%;
 }
 .semgrid th, .semgrid td {
   border-right: 1px solid var(--border);
@@ -29,11 +43,14 @@ table.semgrid {
 .semgrid thead tr:first-child th { top: 0; }
 .semgrid thead tr:last-child th { top: 29px; }
 .semgrid thead .course-head { padding: 5px 8px; }
-.semgrid thead .course-head .collapse-btn {
-  border: none; background: none; color: var(--text-dim);
-  font-family: var(--font-mono); font-size: 11px; padding: 0 4px;
-}
-.semgrid thead .course-head .collapse-btn:hover { color: var(--accent); }
+.semgrid thead .course-head { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 29px; box-sizing: border-box; }
+.semgrid thead .track-head { white-space: nowrap; overflow: hidden; }
+.column-resizer { position: absolute; top: 0; right: 0; bottom: 0; width: 10px; cursor: col-resize; touch-action: none; user-select: none; z-index: 1; }
+.column-resizer::after { content: ""; position: absolute; right: 1px; top: 2px; bottom: 2px; width: 2px; background: var(--border-strong); }
+.column-resizer:hover::after, .semgrid.resizing .column-resizer::after { background: var(--accent); }
+.semgrid.resizing { cursor: col-resize; user-select: none; }
+.semgrid:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.grid-help { font-size: 12px; color: var(--text-dim); margin: 8px 0; }
 .semgrid thead .track-head {
   padding: 3px 8px;
   font-family: var(--font-mono);
@@ -61,36 +78,48 @@ table.semgrid {
 .semgrid tr.current-week td { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
 
 .semgrid td.cell {
-  min-width: 128px;
-  max-width: 200px;
-  cursor: pointer;
+  cursor: cell;
+  user-select: none;
+  touch-action: none;
 }
 .semgrid td.cell:hover { background: var(--surface-2); }
 .cell-inner { display: flex; gap: 6px; padding: 5px 7px; align-items: flex-start; min-height: 30px; }
 .cell-inner .topic {
+  min-width: 0;
+  flex: 1;
   font-size: 12px;
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
+td.cell .swatch { flex-shrink: 0; }
 .cell-inner .topic:empty::before { content: "–"; color: var(--border-strong); }
 .cell-meta { margin-left: auto; display: flex; gap: 3px; flex: none; }
 .cell-meta .has-note, .cell-meta .has-link { font-size: 10px; color: var(--text-dim); }
 td.cell.behind { box-shadow: inset 3px 0 0 var(--danger); }
+.semgrid td.cell.selected { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); outline: 1px solid var(--accent); outline-offset: -1px; }
+.semgrid td.cell.selection-active { outline-width: 2px; }
 td.cell .swatch { cursor: pointer; margin-top: 1px; }
 td.cell .swatch:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-.semgrid td.cell-collapsed {
-  min-width: 44px;
-  text-align: center;
-  cursor: pointer;
-}
-.cell-collapsed .mini { display: flex; gap: 3px; justify-content: center; padding: 8px 4px; }
-.cell-collapsed .swatch { width: 11px; height: 11px; }
 
 .grid-legend { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--text-dim); }
 .grid-legend .swatch { margin-right: 4px; }
+
+/* Scale only table content; controls, legend and editor stay at normal size. */
+.grid-zoom { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+.grid-zoom select { width: auto; }
+.semgrid { font-size: calc(12.5px * var(--grid-scale)); }
+.semgrid thead tr:last-child th { top: calc(29px * var(--grid-scale)); }
+.semgrid thead .course-head { padding: calc(5px * var(--grid-scale)) calc(8px * var(--grid-scale)); height: calc(29px * var(--grid-scale)); }
+.semgrid thead .track-head { padding: calc(3px * var(--grid-scale)) calc(8px * var(--grid-scale)); font-size: calc(10.5px * var(--grid-scale)); }
+.semgrid .week-col { font-size: calc(11.5px * var(--grid-scale)); padding: calc(6px * var(--grid-scale)) calc(8px * var(--grid-scale)); min-width: calc(86px * var(--grid-scale)); }
+.semgrid .week-col .wk-num { font-size: calc(10px * var(--grid-scale)); }
+.semgrid .cell-inner { gap: calc(6px * var(--grid-scale)); padding: calc(5px * var(--grid-scale)) calc(7px * var(--grid-scale)); min-height: calc(30px * var(--grid-scale)); }
+.semgrid .cell-inner .topic { font-size: calc(12px * var(--grid-scale)); }
+.semgrid .cell-meta { gap: calc(3px * var(--grid-scale)); }
+.semgrid .cell-meta .has-note, .semgrid .cell-meta .has-link { font-size: calc(10px * var(--grid-scale)); }
+.semgrid .swatch { width: calc(14px * var(--grid-scale)); height: calc(14px * var(--grid-scale)); border-radius: calc(3px * var(--grid-scale)); margin-top: calc(1px * var(--grid-scale)); }
 
 /* status picker in cell editor */
 .status-picker { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }

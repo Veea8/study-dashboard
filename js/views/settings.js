@@ -83,7 +83,6 @@ export function renderOnboarding(container, onDone) {
         shortName: shortInput.value.trim() || name.slice(0, 4),
         color: nextColor(courses),
         order: courses.length,
-        collapsed: false,
       });
     }
     if (!courses.length) {
@@ -247,7 +246,6 @@ export function render(container) {
         shortName: short.value.trim() || name.value.trim().slice(0, 4),
         color: row.querySelector('input[type="color"]').value,
         order: kept.length,
-        collapsed: existing?.collapsed ?? false,
       });
     }
     if (!kept.length) return toast("Keep at least one course.", "error");
