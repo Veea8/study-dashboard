@@ -76,6 +76,7 @@ table.semgrid {
 .semgrid .week-col .wk-num { color: var(--text-dim); font-size: 10px; display: block; }
 .semgrid tr.current-week .week-col { color: var(--accent); font-weight: 700; }
 .semgrid tr.current-week td { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.semgrid tr.week-end td { border-bottom-color: var(--border-strong); }
 
 .semgrid td.cell {
   cursor: cell;
@@ -287,8 +288,11 @@ table.week-rollup { border-collapse: collapse; width: 100%; font-size: 12px; }
 .pace-note { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
 
 .dash-course-status { display: flex; flex-direction: column; gap: 7px; }
-.dcs-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.dcs-row { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; }
 .dcs-row .cname { flex: 0 0 92px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dcs-sessions { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dcs-session { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.dcs-session .session-tag { flex: 0 0 18px; color: var(--text-dim); font-family: var(--font-mono); font-size: 10px; }
 .dcs-track { flex: 1; display: flex; align-items: center; gap: 5px; min-width: 0; }
 .dcs-track .t { color: var(--text-dim); font-family: var(--font-mono); font-size: 10px; }
 .dcs-track .topic { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }

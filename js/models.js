@@ -11,6 +11,7 @@ export const STATUS_WEIGHT = { none: 0, started: 0.25, partial: 0.5, full: 1 };
 
 export const TRACKS = ["lecture", "exercises"];
 export const TRACK_LABELS = { lecture: "Lecture", exercises: "Exerc." };
+export const SESSIONS_PER_WEEK = 2;
 
 export const TASK_TYPES = ["homework", "project", "reading", "lab", "examprep"];
 export const TASK_TYPE_LABELS = {
@@ -86,13 +87,14 @@ export function currentWeekIndex(settings, date = today()) {
 
 /* ---------- grid cells ---------- */
 
-export function cellKey(weekIndex, courseId, track) {
-  return `${weekIndex}:${courseId}:${track}`;
+export function cellKey(weekIndex, courseId, track, session = 0) {
+  const base = `${weekIndex}:${courseId}:${track}`;
+  return session === 0 ? base : `${base}:${session + 1}`;
 }
 
-export function getCell(grid, weekIndex, courseId, track) {
+export function getCell(grid, weekIndex, courseId, track, session = 0) {
   return (
-    grid[cellKey(weekIndex, courseId, track)] || {
+    grid[cellKey(weekIndex, courseId, track, session)] || {
       topic: "",
       status: "none",
       note: "",
@@ -103,12 +105,14 @@ export function getCell(grid, weekIndex, courseId, track) {
 
 /** Weighted progress through the whole syllabus, 0..1 */
 export function courseProgress(grid, settings, courseId) {
-  const total = settings.numWeeks * TRACKS.length;
+  const total = settings.numWeeks * TRACKS.length * SESSIONS_PER_WEEK;
   if (!total) return 0;
   let sum = 0;
   for (let w = 0; w < settings.numWeeks; w++) {
-    for (const track of TRACKS) {
-      sum += STATUS_WEIGHT[getCell(grid, w, courseId, track).status] || 0;
+    for (let session = 0; session < SESSIONS_PER_WEEK; session++) {
+      for (const track of TRACKS) {
+        sum += STATUS_WEIGHT[getCell(grid, w, courseId, track, session).status] || 0;
+      }
     }
   }
   return sum / total;

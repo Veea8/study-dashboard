@@ -7,7 +7,7 @@ export function parseClipboard(text) {
   return text.replace(/\r\n?/g, "\n").replace(/\n$/, "").split("\n").map((row) => row.split("\t"));
 }
 
-export function pasteTopics(grid, rows, columns, numWeeks, bounds) {
+export function pasteTopics(grid, rows, columns, numRows, bounds, rowToCell = (row) => ({ weekIndex: row, session: 0 })) {
   const fill = rows.length === 1 && rows[0].length === 1;
   let clipped = false;
   let bottom = bounds.top;
@@ -18,9 +18,10 @@ export function pasteTopics(grid, rows, columns, numWeeks, bounds) {
     for (let x = 0; x < values.length; x++) {
       const w = bounds.top + y;
       const col = columns[bounds.left + x];
-      if (w >= numWeeks || !col) { clipped = true; continue; }
-      const key = cellKey(w, col.courseId, col.track);
-      const cell = { ...getCell(grid, w, col.courseId, col.track), topic: values[x] };
+      if (w >= numRows || !col) { clipped = true; continue; }
+      const { weekIndex, session } = rowToCell(w);
+      const key = cellKey(weekIndex, col.courseId, col.track, session);
+      const cell = { ...getCell(grid, weekIndex, col.courseId, col.track, session), topic: values[x] };
       if (!cell.topic && !cell.note && !cell.links?.length && cell.status === "none") delete grid[key];
       else grid[key] = cell;
       bottom = Math.max(bottom, w);
@@ -31,13 +32,14 @@ export function pasteTopics(grid, rows, columns, numWeeks, bounds) {
 }
 
 export function bindGridControls(table, options) {
-  const { columns, widths, numWeeks, layout, rerender, edit } = options;
+  const { columns, widths, numWeeks: numRows, layout, rerender, edit } = options;
+  const rowToCell = options.rowToCell || ((row) => ({ weekIndex: row, session: 0 }));
   const editable = columns;
   const cells = [...table.querySelectorAll("td.cell")];
   const columnIndex = (point) => editable.findIndex((c) => c.key === point.key);
   const pointFor = (td) => ({ w: +td.dataset.w, key: `${td.dataset.course}:${td.dataset.track}` });
   let selection = options.selection;
-  if (selection && (!editable.length || [selection.anchor, selection.end].some((p) => columnIndex(p) < 0 || p.w >= numWeeks))) selection = null;
+  if (selection && (!editable.length || [selection.anchor, selection.end].some((p) => columnIndex(p) < 0 || p.w >= numRows))) selection = null;
   let gesture = null;
   let zoom = 1;
   const updateDimensions = () => {
@@ -134,11 +136,11 @@ export function bindGridControls(table, options) {
       return;
     }
     if (e.key === "Escape" && gesture?.type === "resize") { e.preventDefault(); finish(); return; }
-    if (!editable.length || !numWeeks) return;
+    if (!editable.length || !numRows) return;
     if ((e.key === "Delete" || e.key === "Backspace") && selection && !command && !e.altKey) {
       e.preventDefault();
       const before = store.getGrid(), grid = { ...before };
-      pasteTopics(grid, [[""]], editable, numWeeks, bounds());
+      pasteTopics(grid, [[""]], editable, numRows, bounds(), rowToCell);
       if (commitGridChange("cells", before, grid)) rerender();
       return;
     }
@@ -153,7 +155,7 @@ export function bindGridControls(table, options) {
     if (!delta) return;
     e.preventDefault();
     const old = selection?.end;
-    const point = { w: Math.max(0, Math.min(numWeeks - 1, (old?.w ?? 0) + (old ? delta[0] : 0))),
+    const point = { w: Math.max(0, Math.min(numRows - 1, (old?.w ?? 0) + (old ? delta[0] : 0))),
       key: editable[Math.max(0, Math.min(editable.length - 1, (old ? columnIndex(old) : 0) + (old ? delta[1] : 0)))].key };
     selection = { anchor: e.shiftKey && selection ? selection.anchor : point, end: point };
     paint();
@@ -163,7 +165,7 @@ export function bindGridControls(table, options) {
     if (e.target !== table || !selection || !e.clipboardData) return;
     e.preventDefault();
     const before = store.getGrid(), grid = { ...before }, b = bounds();
-    const result = pasteTopics(grid, parseClipboard(e.clipboardData.getData("text/plain")), editable, numWeeks, b);
+    const result = pasteTopics(grid, parseClipboard(e.clipboardData.getData("text/plain")), editable, numRows, b, rowToCell);
     commitGridChange("cells", before, grid);
     selection = { anchor: { w: b.top, key: editable[b.left].key }, end: { w: result.bottom, key: editable[result.right].key } };
     rerender();

@@ -1,4 +1,4 @@
-// Semester overview grid: weeks × (course → lecture/exercises).
+// Semester overview grid: weeks × two sessions × (course → lecture/exercises).
 
 import { store } from "../store.js";
 import { esc, openModal, closeModal } from "../ui.js";
@@ -9,6 +9,7 @@ import {
   STATUS_LABELS,
   TRACKS,
   TRACK_LABELS,
+  SESSIONS_PER_WEEK,
   cellKey,
   getCell,
   weekLabel,
@@ -33,9 +34,9 @@ export function render(container) {
     Number.isFinite(layout[col.key]) ? layout[col.key] : 160));
   const resizeHandle = (key) => `<span class="column-resizer" data-resize="${esc(key)}" title="Drag to resize column"></span>`;
 
-  const swatch = (status, w, courseId, track, clickable = true) =>
+  const swatch = (status, w, courseId, track, session, clickable = true) =>
     `<button class="swatch ${status}" ${clickable ? "" : 'tabindex="-1"'}
-       data-w="${w}" data-course="${courseId}" data-track="${track}"
+       data-w="${w}" data-course="${courseId}" data-track="${track}" data-session="${session}"
        title="${STATUS_LABELS[status]} — click to cycle"></button>`;
 
   let head1 = `<th class="week-col">Week</th>`;
@@ -48,23 +49,26 @@ export function render(container) {
 
   let body = "";
   for (let w = 0; w < settings.numWeeks; w++) {
-    let row = `<td class="week-col"><span class="wk-num">W${w + 1}</span>${esc(weekLabel(settings, w))}</td>`;
-    for (const c of courses) {
+    for (let session = 0; session < SESSIONS_PER_WEEK; session++) {
+      const visualRow = w * SESSIONS_PER_WEEK + session;
+      let row = `<td class="week-col"><span class="wk-num">W${w + 1} · S${session + 1}</span>${esc(weekLabel(settings, w))}</td>`;
+      for (const c of courses) {
         for (const t of TRACKS) {
-          const cell = getCell(grid, w, c.id, t);
+          const cell = getCell(grid, w, c.id, t, session);
           const behind = w < curWeek && cell.status !== "full";
           const meta =
             (cell.note ? `<span class="has-note" title="Has note">✎</span>` : "") +
             (cell.links?.length ? `<span class="has-link" title="Has links">↗</span>` : "");
-          row += `<td class="cell ${behind ? "behind" : ""}" data-w="${w}" data-course="${c.id}" data-track="${t}">
+          row += `<td class="cell ${behind ? "behind" : ""}" data-w="${visualRow}" data-week="${w}" data-session="${session}" data-course="${c.id}" data-track="${t}">
             <div class="cell-inner">
-              ${swatch(cell.status, w, c.id, t)}
+              ${swatch(cell.status, w, c.id, t, session)}
               <span class="topic" title="${esc(cell.topic)}">${esc(cell.topic)}</span>
               ${meta ? `<span class="cell-meta">${meta}</span>` : ""}
             </div></td>`;
         }
+      }
+      body += `<tr class="${w === curWeek ? "current-week " : ""}${session === SESSIONS_PER_WEEK - 1 ? "week-end" : ""}">${row}</tr>`;
     }
-    body += `<tr class="${w === curWeek ? "current-week" : ""}">${row}</tr>`;
   }
 
   const legend = STATUSES.map(
@@ -95,8 +99,9 @@ export function render(container) {
   const wrap = container.querySelector(".grid-wrap");
   const table = container.querySelector(".semgrid");
   const controls = bindGridControls(table, {
-    columns, widths, numWeeks: settings.numWeeks, layout, selection: savedSelection,
-    rerender: () => rerender(), edit: (td) => openCellEditor(+td.dataset.w, td.dataset.course, td.dataset.track, rerender),
+    columns, widths, numWeeks: settings.numWeeks * SESSIONS_PER_WEEK, layout, selection: savedSelection,
+    rowToCell: (row) => ({ weekIndex: Math.floor(row / SESSIONS_PER_WEEK), session: row % SESSIONS_PER_WEEK }),
+    rerender: () => rerender(), edit: (td) => openCellEditor(+td.dataset.week, td.dataset.course, td.dataset.track, +td.dataset.session, rerender),
   });
   controls.setZoom(zoom);
   if (savedScroll) {
@@ -125,27 +130,27 @@ export function render(container) {
   container.querySelector(".semgrid").addEventListener("click", (e) => {
     const sw = e.target.closest("button.swatch");
     if (sw) {
-      cycleStatus(+sw.dataset.w, sw.dataset.course, sw.dataset.track);
+      cycleStatus(+sw.dataset.w, sw.dataset.course, sw.dataset.track, +sw.dataset.session);
       rerender();
       return;
     }
   });
 }
 
-function cycleStatus(w, courseId, track) {
+function cycleStatus(w, courseId, track, session) {
   const before = store.getGrid();
   const grid = { ...before };
-  const cell = { ...getCell(grid, w, courseId, track) };
+  const cell = { ...getCell(grid, w, courseId, track, session) };
   cell.status = STATUSES[(STATUSES.indexOf(cell.status) + 1) % STATUSES.length];
-  grid[cellKey(w, courseId, track)] = cell;
+  grid[cellKey(w, courseId, track, session)] = cell;
   commitGridChange("cells", before, grid);
 }
 
-function openCellEditor(w, courseId, track, onSaved) {
+function openCellEditor(w, courseId, track, session, onSaved) {
   const settings = store.getSettings();
   const course = store.getCourses().find((c) => c.id === courseId);
   const grid = store.getGrid();
-  const cell = getCell(grid, w, courseId, track);
+  const cell = getCell(grid, w, courseId, track, session);
 
   const linkRow = (l = { label: "", url: "" }) => `
     <div class="link-row">
@@ -156,7 +161,7 @@ function openCellEditor(w, courseId, track, onSaved) {
     </div>`;
 
   const modal = openModal(
-    `${course?.shortName ?? "?"} · ${TRACK_LABELS[track]} · W${w + 1} (${weekLabel(settings, w)})`,
+    `${course?.shortName ?? "?"} · ${TRACK_LABELS[track]} · W${w + 1}, session ${session + 1} (${weekLabel(settings, w)})`,
     `
     <div class="status-picker">
       ${STATUSES.map(
@@ -211,9 +216,9 @@ function openCellEditor(w, courseId, track, onSaved) {
     const before = store.getGrid();
     const g = { ...before };
     if (!updated.topic && !updated.note && !links.length && updated.status === "none") {
-      delete g[cellKey(w, courseId, track)];
+      delete g[cellKey(w, courseId, track, session)];
     } else {
-      g[cellKey(w, courseId, track)] = updated;
+      g[cellKey(w, courseId, track, session)] = updated;
     }
     commitGridChange("cells", before, g);
     closeModal();

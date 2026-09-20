@@ -23,6 +23,7 @@ async function load(file) {
   const mod = await load(path.join(__dirname, '../js/grid-controls.js'));
   await mod.evaluate();
   const { parseClipboard, pasteTopics, bindGridControls } = mod.namespace;
+  const models = modules.get(path.resolve(__dirname, '../js/models.js')).namespace;
   const plain = (value) => JSON.parse(JSON.stringify(value));
   assert.deepEqual(plain(parseClipboard('A\tB\r\nC\t\r\n')), [['A', 'B'], ['C', '']]);
   assert.deepEqual(plain(parseClipboard('A\n\n')), [['A'], ['']]);
@@ -40,6 +41,25 @@ async function load(file) {
   assert.equal(grid['0:a:lecture'].topic, '');
   assert.equal(grid['1:a:exercises'], undefined);
   assert.equal(pasteTopics(grid, [['A', 'B', 'C'], ['D']], columns, 1, bounds).clipped, true);
+
+  const sessionGrid = {};
+  const sessionBounds = { top: 0, bottom: 3, left: 0, right: 0 };
+  const rowToCell = (row) => ({ weekIndex: Math.floor(row / 2), session: row % 2 });
+  pasteTopics(sessionGrid, parseClipboard('W1S1\nW1S2\nW2S1\nW2S2'), columns, 4, sessionBounds, rowToCell);
+  assert.equal(sessionGrid['0:a:lecture'].topic, 'W1S1');
+  assert.equal(sessionGrid['0:a:lecture:2'].topic, 'W1S2');
+  assert.equal(sessionGrid['1:a:lecture'].topic, 'W2S1');
+  assert.equal(sessionGrid['1:a:lecture:2'].topic, 'W2S2');
+  assert.equal(models.cellKey(0, 'a', 'lecture'), '0:a:lecture');
+  assert.equal(models.cellKey(0, 'a', 'lecture', 1), '0:a:lecture:2');
+  assert.equal(models.getCell({ '0:a:lecture': { topic: 'existing', status: 'full' } }, 0, 'a', 'lecture').topic, 'existing');
+  assert.equal(models.getCell({ '0:a:lecture': { topic: 'existing', status: 'full' } }, 0, 'a', 'lecture', 1).topic, '');
+  assert.equal(models.courseProgress({
+    '0:a:lecture': { status: 'full' },
+    '0:a:exercises': { status: 'full' },
+    '0:a:lecture:2': { status: 'full' },
+    '0:a:exercises:2': { status: 'full' },
+  }, { numWeeks: 1 }, 'a'), 1);
 
   const handlers = {};
   const cells = Array.from({ length: 4 }, (_, i) => ({

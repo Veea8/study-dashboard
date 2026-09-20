@@ -17,6 +17,7 @@ import {
   expectedProgress,
   getCell,
   TRACKS,
+  SESSIONS_PER_WEEK,
   STATUS_LABELS,
   TASK_TYPE_LABELS,
 } from "../models.js";
@@ -58,15 +59,18 @@ export function render(container) {
   const statusHtml = inSemester
     ? courses
         .map((c) => {
-          const tracks = TRACKS.map((tr) => {
-            const cell = getCell(grid, curWeek, c.id, tr);
-            return `<span class="dcs-track" title="${tr}: ${STATUS_LABELS[cell.status]}">
-              <span class="t">${tr === "lecture" ? "L" : "E"}</span>
-              <span class="swatch ${cell.status}"></span>
-              <span class="topic">${esc(cell.topic)}</span>
-            </span>`;
+          const sessions = Array.from({ length: SESSIONS_PER_WEEK }, (_, session) => {
+            const tracks = TRACKS.map((tr) => {
+              const cell = getCell(grid, curWeek, c.id, tr, session);
+              return `<span class="dcs-track" title="Session ${session + 1} ${tr}: ${STATUS_LABELS[cell.status]}">
+                <span class="t">${tr === "lecture" ? "L" : "E"}</span>
+                <span class="swatch ${cell.status}"></span>
+                <span class="topic">${esc(cell.topic)}</span>
+              </span>`;
+            }).join("");
+            return `<div class="dcs-session"><span class="session-tag">S${session + 1}</span>${tracks}</div>`;
           }).join("");
-          return `<div class="dcs-row"><span class="cname" style="color:${esc(c.color)}">${esc(c.shortName)}</span>${tracks}</div>`;
+          return `<div class="dcs-row"><span class="cname" style="color:${esc(c.color)}">${esc(c.shortName)}</span><div class="dcs-sessions">${sessions}</div></div>`;
         })
         .join("")
     : `<p class="dash-empty">Outside the configured semester (${esc(settings.semesterStart)}, ${settings.numWeeks} weeks).</p>`;
