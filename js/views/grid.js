@@ -55,11 +55,10 @@ export function render(container) {
       for (const c of courses) {
         for (const t of TRACKS) {
           const cell = getCell(grid, w, c.id, t, session);
-          const behind = w < curWeek && cell.status !== "full";
           const meta =
             (cell.note ? `<span class="has-note" title="Has note">✎</span>` : "") +
             (cell.links?.length ? `<span class="has-link" title="Has links">↗</span>` : "");
-          row += `<td class="cell ${behind ? "behind" : ""}" data-w="${visualRow}" data-week="${w}" data-session="${session}" data-course="${c.id}" data-track="${t}">
+          row += `<td class="cell" data-w="${visualRow}" data-week="${w}" data-session="${session}" data-course="${c.id}" data-track="${t}">
             <div class="cell-inner">
               ${swatch(cell.status, w, c.id, t, session)}
               <span class="topic" title="${esc(cell.topic)}">${esc(cell.topic)}</span>
@@ -92,7 +91,6 @@ export function render(container) {
     </div>
     <p class="grid-help">Drag or Shift-click to select · paste topics · Delete to clear · Ctrl/Cmd+Z to undo · double-click or Enter to edit · hold and drag header edges to resize</p>
     <div class="grid-legend">${legend}
-      <span title="Cell in a past week that is not Fully done"><span class="swatch" style="box-shadow: inset 3px 0 0 var(--danger); background: var(--surface-2)"></span>behind</span>
     </div>
     </section>`;
 

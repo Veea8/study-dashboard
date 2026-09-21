@@ -3,7 +3,7 @@
 A personal, single-user web app for planning and tracking a self-study CS semester:
 
 - **Semester grid** — two independent sessions per week × courses, each with *Lecture* and *Exercises* tracked through
-  Not started → Started → Partially → Fully, plus topic, notes and resource links per cell.
+  Not started (grey) → Behind (red) → Started (yellow) → Partly done (green) → Fully done (blue), plus topic, notes and resource links per cell.
   Click to select, drag or Shift-click to select a range, and paste a whole list or tab-separated
   spreadsheet block into topics. Double-click or press Enter to edit a cell. Drag the edges of
   Lecture/Exercises headers to resize columns; widths are remembered and included in backups.

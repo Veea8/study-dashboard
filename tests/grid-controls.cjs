@@ -24,6 +24,8 @@ async function load(file) {
   await mod.evaluate();
   const { parseClipboard, pasteTopics, bindGridControls } = mod.namespace;
   const models = modules.get(path.resolve(__dirname, '../js/models.js')).namespace;
+  assert.deepEqual(Array.from(models.STATUSES), ['none', 'behind', 'started', 'partial', 'full']);
+  assert.equal(models.STATUS_WEIGHT.behind, 0);
   const plain = (value) => JSON.parse(JSON.stringify(value));
   assert.deepEqual(plain(parseClipboard('A\tB\r\nC\t\r\n')), [['A', 'B'], ['C', '']]);
   assert.deepEqual(plain(parseClipboard('A\n\n')), [['A'], ['']]);

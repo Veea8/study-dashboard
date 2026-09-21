@@ -26,12 +26,14 @@ a { color: inherit; }
 
   --st-none: #a5adb8;
   --st-none-bg: #eef0f3;
-  --st-started: #d97706;
-  --st-started-bg: #fdeed7;
-  --st-partial: #2563eb;
-  --st-partial-bg: #dde9fd;
-  --st-full: #16a34a;
-  --st-full-bg: #d9f2e2;
+  --st-behind: #dc2626;
+  --st-behind-bg: #fef2f2;
+  --st-started: #eab308;
+  --st-started-bg: #fef9c3;
+  --st-partial: #16a34a;
+  --st-partial-bg: #dcfce7;
+  --st-full: #2563eb;
+  --st-full-bg: #dbeafe;
 
   --shadow: 0 4px 18px rgba(15, 20, 30, .13);
   --radius: 6px;
@@ -54,12 +56,14 @@ a { color: inherit; }
 
     --st-none: #6b7480;
     --st-none-bg: #262a31;
-    --st-started: #f0a548;
-    --st-started-bg: #35281a;
-    --st-partial: #60a5fa;
-    --st-partial-bg: #1b2a44;
-    --st-full: #4ade80;
-    --st-full-bg: #17301f;
+    --st-behind: #f87171;
+    --st-behind-bg: #3b1d22;
+    --st-started: #facc15;
+    --st-started-bg: #3a3011;
+    --st-partial: #4ade80;
+    --st-partial-bg: #17301f;
+    --st-full: #60a5fa;
+    --st-full-bg: #1b2a44;
 
     --shadow: 0 4px 18px rgba(0, 0, 0, .5);
     color-scheme: dark;
@@ -80,12 +84,14 @@ a { color: inherit; }
 
   --st-none: #6b7480;
   --st-none-bg: #262a31;
-  --st-started: #f0a548;
-  --st-started-bg: #35281a;
-  --st-partial: #60a5fa;
-  --st-partial-bg: #1b2a44;
-  --st-full: #4ade80;
-  --st-full-bg: #17301f;
+  --st-behind: #f87171;
+  --st-behind-bg: #3b1d22;
+  --st-started: #facc15;
+  --st-started-bg: #3a3011;
+  --st-partial: #4ade80;
+  --st-partial-bg: #17301f;
+  --st-full: #60a5fa;
+  --st-full-bg: #1b2a44;
 
   --shadow: 0 4px 18px rgba(0, 0, 0, .5);
   color-scheme: dark;
@@ -203,6 +209,7 @@ h2 { font-size: 15px; margin-bottom: 8px; }
 }
 .st-chip { font-weight: 600; }
 .st-chip.none    { background: var(--st-none-bg);    color: var(--st-none); }
+.st-chip.behind  { background: var(--st-behind-bg);  color: var(--st-behind); }
 .st-chip.started { background: var(--st-started-bg); color: var(--st-started); }
 .st-chip.partial { background: var(--st-partial-bg); color: var(--st-partial); }
 .st-chip.full    { background: var(--st-full-bg);    color: var(--st-full); }
@@ -216,7 +223,8 @@ h2 { font-size: 15px; margin-bottom: 8px; }
   vertical-align: -2px;
   flex: none;
 }
-.swatch.none    { background: var(--st-none-bg);    border-color: var(--st-none); }
+.swatch.none    { background: var(--st-none); }
+.swatch.behind  { background: var(--st-behind); }
 .swatch.started { background: var(--st-started); }
 .swatch.partial { background: var(--st-partial); }
 .swatch.full    { background: var(--st-full); }

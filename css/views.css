@@ -97,7 +97,6 @@ td.cell .swatch { flex-shrink: 0; }
 .cell-inner .topic:empty::before { content: "–"; color: var(--border-strong); }
 .cell-meta { margin-left: auto; display: flex; gap: 3px; flex: none; }
 .cell-meta .has-note, .cell-meta .has-link { font-size: 10px; color: var(--text-dim); }
-td.cell.behind { box-shadow: inset 3px 0 0 var(--danger); }
 .semgrid td.cell.selected { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); outline: 1px solid var(--accent); outline-offset: -1px; }
 .semgrid td.cell.selection-active { outline-width: 2px; }
 td.cell .swatch { cursor: pointer; margin-top: 1px; }
@@ -134,6 +133,7 @@ td.cell .swatch:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
   white-space: nowrap;
 }
 .status-picker button.sel.none    { background: var(--st-none-bg);    border-color: var(--st-none);    color: var(--text); font-weight: 600; }
+.status-picker button.sel.behind  { background: var(--st-behind-bg);  border-color: var(--st-behind);  color: var(--st-behind); font-weight: 600; }
 .status-picker button.sel.started { background: var(--st-started-bg); border-color: var(--st-started); color: var(--st-started); font-weight: 600; }
 .status-picker button.sel.partial { background: var(--st-partial-bg); border-color: var(--st-partial); color: var(--st-partial); font-weight: 600; }
 .status-picker button.sel.full    { background: var(--st-full-bg);    border-color: var(--st-full);    color: var(--st-full); font-weight: 600; }

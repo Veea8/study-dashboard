@@ -1,13 +1,14 @@
 // Entity constants and pure helpers (dates, week math, progress).
 
-export const STATUSES = ["none", "started", "partial", "full"];
+export const STATUSES = ["none", "behind", "started", "partial", "full"];
 export const STATUS_LABELS = {
   none: "Not started",
+  behind: "Behind",
   started: "Started",
-  partial: "Partially",
-  full: "Fully",
+  partial: "Partly done",
+  full: "Fully done",
 };
-export const STATUS_WEIGHT = { none: 0, started: 0.25, partial: 0.5, full: 1 };
+export const STATUS_WEIGHT = { none: 0, behind: 0, started: 0.25, partial: 0.5, full: 1 };
 
 export const TRACKS = ["lecture", "exercises"];
 export const TRACK_LABELS = { lecture: "Lecture", exercises: "Exerc." };
