@@ -25,7 +25,8 @@ async function load(file) {
   const { parseClipboard, pasteTopics, bindGridControls } = mod.namespace;
   const models = modules.get(path.resolve(__dirname, '../js/models.js')).namespace;
   assert.deepEqual(Array.from(models.STATUSES), ['none', 'behind', 'started', 'partial', 'full']);
-  assert.equal(models.STATUS_WEIGHT.behind, 0);
+  assert.equal(models.STATUS_LABELS.none, 'Unmarked');
+  assert.equal(models.STATUS_LABELS.behind, 'Not started');
   const plain = (value) => JSON.parse(JSON.stringify(value));
   assert.deepEqual(plain(parseClipboard('A\tB\r\nC\t\r\n')), [['A', 'B'], ['C', '']]);
   assert.deepEqual(plain(parseClipboard('A\n\n')), [['A'], ['']]);
@@ -62,6 +63,12 @@ async function load(file) {
     '0:a:lecture:2': { status: 'full' },
     '0:a:exercises:2': { status: 'full' },
   }, { numWeeks: 1 }, 'a'), 1);
+  assert.equal(models.courseProgress({
+    '0:a:lecture': { status: 'behind' },
+    '0:a:exercises': { status: 'started' },
+    '0:a:lecture:2': { status: 'partial' },
+  }, { numWeeks: 1 }, 'a'), 0.75);
+  assert.equal(models.courseProgress({ '0:a:lecture': { status: 'none' } }, { numWeeks: 1 }, 'a'), 0);
 
   const handlers = {};
   const cells = Array.from({ length: 4 }, (_, i) => ({

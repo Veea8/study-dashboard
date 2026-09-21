@@ -2,13 +2,13 @@
 
 export const STATUSES = ["none", "behind", "started", "partial", "full"];
 export const STATUS_LABELS = {
-  none: "Not started",
-  behind: "Behind",
+  none: "Unmarked",
+  // Keep the stored key for existing red cells; only its display name changes.
+  behind: "Not started",
   started: "Started",
   partial: "Partly done",
   full: "Fully done",
 };
-export const STATUS_WEIGHT = { none: 0, behind: 0, started: 0.25, partial: 0.5, full: 1 };
 
 export const TRACKS = ["lecture", "exercises"];
 export const TRACK_LABELS = { lecture: "Lecture", exercises: "Exerc." };
@@ -104,7 +104,7 @@ export function getCell(grid, weekIndex, courseId, track, session = 0) {
   );
 }
 
-/** Weighted progress through the whole syllabus, 0..1 */
+/** Share of syllabus cells with a non-grey status, 0..1. */
 export function courseProgress(grid, settings, courseId) {
   const total = settings.numWeeks * TRACKS.length * SESSIONS_PER_WEEK;
   if (!total) return 0;
@@ -112,7 +112,7 @@ export function courseProgress(grid, settings, courseId) {
   for (let w = 0; w < settings.numWeeks; w++) {
     for (let session = 0; session < SESSIONS_PER_WEEK; session++) {
       for (const track of TRACKS) {
-        sum += STATUS_WEIGHT[getCell(grid, w, courseId, track, session).status] || 0;
+        if (getCell(grid, w, courseId, track, session).status !== "none") sum++;
       }
     }
   }

@@ -70,7 +70,7 @@ export function render(container) {
     }
   }
 
-  const legend = STATUSES.map(
+  const legend = STATUSES.filter((s) => s !== "none").map(
     (s) => `<span><span class="swatch ${s}"></span>${STATUS_LABELS[s]}</span>`
   ).join("");
 

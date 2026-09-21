@@ -138,7 +138,7 @@ export function render(container) {
       <div class="card">
         <h2>Syllabus progress</h2>
         ${progHtml || `<p class="dash-empty">No courses configured.</p>`}
-        <p class="pace-note">▏ marker = where the calendar says you should be (${Math.round(expected * 100)}%).</p>
+        <p class="pace-note">Bar = cells marked red, yellow, green, or blue; grey cells are excluded. ▏ marker = calendar pace (${Math.round(expected * 100)}%).</p>
       </div>
     </div>`;
 }
